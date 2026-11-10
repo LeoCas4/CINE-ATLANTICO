@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cine Atlántico · Boletos</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="marca">
+      <img src="logo.svg" alt="" class="logo" width="60" height="60" />
+      <h1><span class="marca-cine">Cine</span><span class="marca-nombre">Atlántico</span></h1>
+    </div>
+    <nav>
+      <button data-vista="cartelera" class="activo">Cartelera</button>
+      <button data-vista="mis-boletos">Mis boletos</button>
+      <button data-vista="admin">Administración</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- CARTELERA -->
+    <section id="cartelera" class="vista activa">
+      <h2>En cartelera</h2>
+      <div id="lista-peliculas" class="peliculas"></div>
+    </section>
+
+    <!-- SELECCIÓN DE ASIENTOS -->
+    <section id="seleccion" class="vista">
+      <button class="volver" data-ir="cartelera">← Volver a la cartelera</button>
+      <div id="info-funcion" class="info-funcion"></div>
+      <div class="seleccion-layout">
+        <div class="mapa-contenedor">
+          <div class="pantalla">PANTALLA</div>
+          <div id="mapa" class="mapa"></div>
+          <div class="leyenda">
+            <span><i class="asiento libre"></i> Disponible</span>
+            <span><i class="asiento libre vip"></i> VIP</span>
+            <span><i class="asiento seleccionado"></i> Seleccionado</span>
+            <span><i class="asiento ocupado"></i> Vendido</span>
+          </div>
+        </div>
+        <aside class="panel">
+          <h3>Asignación automática</h3>
+          <div class="fila-form">
+            <input id="auto-cantidad" type="number" min="1" max="10" value="2" />
+            <button id="btn-auto">Elegir mejores asientos</button>
+          </div>
+          <p class="ayuda">O haz clic en los asientos del mapa para elegirlos tú.</p>
+          <h3>Tu selección</h3>
+          <div id="resumen"></div>
+          <form id="form-compra">
+            <label>Nombre <input name="nombre" required /></label>
+            <label>Email <input name="email" type="email" required /></label>
+            <label>Método de pago
+              <select name="metodoPago">
+                <option value="tarjeta">Tarjeta</option>
+                <option value="efectivo">Efectivo en taquilla</option>
+              </select>
+            </label>
+            <button type="submit" id="btn-comprar" disabled>Comprar</button>
+          </form>
+        </aside>
+      </div>
+    </section>
+
+    <!-- CONFIRMACIÓN -->
+    <section id="confirmacion" class="vista">
+      <h2>¡Compra exitosa!</h2>
+      <div id="detalle-compra"></div>
+      <button data-ir="cartelera">Volver a la cartelera</button>
+    </section>
+
+    <!-- MIS BOLETOS -->
+    <section id="mis-boletos" class="vista">
+      <h2>Mis boletos</h2>
+      <form id="form-buscar" class="fila-form">
+        <input name="q" placeholder="Código de compra (CIN-XXXXXX) o email" required />
+        <button>Buscar</button>
+      </form>
+      <div id="resultado-busqueda"></div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="admin" class="vista">
+      <h2>Administración</h2>
+      <div class="fila-form">
+        <input id="admin-key" type="password" placeholder="Clave de administrador" />
+        <button id="btn-admin-entrar">Entrar</button>
+      </div>
+      <div id="admin-panel" hidden>
+        <div class="admin-grid">
+          <form id="form-pelicula" class="tarjeta">
+            <h3>Nueva película</h3>
+            <label>Título <input name="titulo" required /></label>
+            <label>Género <input name="genero" /></label>
+            <label>Duración (min) <input name="duracionMin" type="number" min="1" required /></label>
+            <label>Clasificación
+              <select name="clasificacion"><option>AA</option><option>A</option><option selected>B</option><option>B15</option><option>C</option><option>D</option></select>
+            </label>
+            <label>Sinopsis <textarea name="sinopsis" rows="2"></textarea></label>
+            <label>Imagen del póster (opcional) <input name="posterUrl" placeholder="/posters/mi-pelicula.jpg o https://..." /></label>
+            <button>Guardar película</button>
+          </form>
+          <form id="form-funcion" class="tarjeta">
+            <h3>Nueva función</h3>
+            <label>Película <select name="peliculaId" required></select></label>
+            <label>Sala <select name="salaId" required></select></label>
+            <label>Inicio <input name="inicio" type="datetime-local" required /></label>
+            <label>Precio <input name="precio" type="number" min="0" step="0.5" required /></label>
+            <label>Formato <select name="formato"><option>2D</option><option>3D</option><option>IMAX</option></select></label>
+            <label>Idioma <select name="idioma"><option>Español</option><option>Subtitulada</option></select></label>
+            <button>Programar función</button>
+          </form>
+          <form id="form-sala" class="tarjeta">
+            <h3>Nueva sala</h3>
+            <label>Nombre <input name="nombre" required /></label>
+            <label>Filas (máx 26) <input name="filas" type="number" min="1" max="26" required /></label>
+            <label>Asientos por fila <input name="asientosPorFila" type="number" min="1" max="40" required /></label>
+            <label>Pasillos después de columna (ej. 4,10) <input name="pasillos" /></label>
+            <label>Filas VIP (ej. H,I) <input name="filasVip" /></label>
+            <label>Recargo VIP <input name="recargoVip" type="number" min="0" value="0" /></label>
+            <button>Guardar sala</button>
+          </form>
+        </div>
+        <h3>Reporte de ventas <button id="btn-reporte" class="chico">Actualizar</button></h3>
+        <div id="reporte"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

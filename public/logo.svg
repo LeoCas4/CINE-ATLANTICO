@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cine Atlántico">
+  <defs>
+    <clipPath id="circulo"><circle cx="32" cy="32" r="27"/></clipPath>
+  </defs>
+  <!-- Anillo exterior tipo carrete de película -->
+  <circle cx="32" cy="32" r="31" fill="#ff7a00"/>
+  <circle cx="32" cy="32" r="27" fill="#0b0b0b"/>
+  <g fill="#0b0b0b">
+    <circle cx="32" cy="3" r="1.6"/><circle cx="32" cy="61" r="1.6"/>
+    <circle cx="3" cy="32" r="1.6"/><circle cx="61" cy="32" r="1.6"/>
+    <circle cx="11.5" cy="11.5" r="1.6"/><circle cx="52.5" cy="11.5" r="1.6"/>
+    <circle cx="11.5" cy="52.5" r="1.6"/><circle cx="52.5" cy="52.5" r="1.6"/>
+  </g>
+  <!-- Botón de reproducir -->
+  <path d="M26 15 L42 25 L26 35 Z" fill="#ff7a00"/>
+  <!-- Olas del Atlántico -->
+  <g clip-path="url(#circulo)" fill="none" stroke="#ff7a00" stroke-width="3.2" stroke-linecap="round">
+    <path d="M2 43 q7.5 -6 15 0 t15 0 t15 0 t15 0"/>
+    <path d="M2 51 q7.5 -6 15 0 t15 0 t15 0 t15 0" opacity=".55"/>
+  </g>
+</svg>

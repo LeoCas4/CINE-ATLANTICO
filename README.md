@@ -16,6 +16,8 @@ También tiene un panel de administración para agregar películas, salas y func
 
 ![Mapa de asientos](docs/seleccion.png)
 
+**Documentación técnica completa** (arquitectura, modelo de datos, flujo de compra, API y pruebas, con diagramas): [docs/DOCUMENTACION.md](docs/DOCUMENTACION.md). También está en [Word](docs/Cine-Atlantico-Documentacion.docx) y [PDF](docs/Cine-Atlantico-Documentacion.pdf).
+
 ---
 
 ## Índice
@@ -76,13 +78,13 @@ También tiene un panel de administración para agregar películas, salas y func
 
 Elige **una** de estas dos formas:
 
-- **Forma fácil (sin Git):** descarga el proyecto como archivo **.zip** y descomprímelo (clic derecho → *Extraer todo*). Guarda la carpeta en un lugar fácil de encontrar, por ejemplo en el **Escritorio**.
+- **Forma fácil (sin Git):** entra a https://github.com/LeoCas4/Cine-Atlantico, da clic en el botón verde **Code** y luego en **Download ZIP**. Descomprime el archivo (clic derecho → *Extraer todo*) y guarda la carpeta en un lugar fácil de encontrar, por ejemplo en el **Escritorio**.
 - **Con Git** (si ya lo sabes usar):
   ```
-  git clone <url-del-repositorio> cine
+  git clone https://github.com/LeoCas4/Cine-Atlantico.git cine
   ```
 
-Al final debes tener una carpeta llamada **`cine`** que contiene, entre otros, los archivos `package.json` y `README.md`.
+Al final debes tener una carpeta que contiene, entre otros, los archivos `package.json` y `README.md`. En esta guía la llamamos **`cine`**. Si la descargaste como ZIP desde GitHub se llamará `Cine-Atlantico-main`; puedes dejarle ese nombre o cambiarlo a `cine`, el programa funciona igual.
 
 ---
 
@@ -353,6 +355,7 @@ cine/
 │   └── routes/           ← direcciones de la API (públicas y de administración)
 ├── public/               ← la página web (frontend): index.html, app.js, styles.css, logo.svg
 │   └── posters/          ← imágenes de cartelera de cada película
+├── docs/                 ← documentación técnica, diagramas y capturas de pantalla
 └── test/                 ← pruebas automáticas
 ```
 

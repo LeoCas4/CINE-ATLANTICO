@@ -1,0 +1,20 @@
+CARPETA DE IMÁGENES DE CARTELERA (PÓSTERS)
+==========================================
+
+Guarda aquí la imagen de cada película con EXACTAMENTE estos nombres:
+
+  star-wars.jpg
+  jurassic-park.jpg
+  harry-potter.jpg
+  minions.jpg
+  parasite.jpg
+  obsesion.jpg
+
+- También se aceptan imágenes .png o .webp con el mismo nombre
+  (por ejemplo: minions.png).
+- Usa imágenes verticales, como un póster de cine (proporción 2:3,
+  por ejemplo 400 x 600 píxeles).
+- Si una película no tiene imagen, la página muestra automáticamente
+  un póster genérico de Cine Atlántico.
+- Después de agregar las imágenes, solo recarga la página en el
+  navegador (F5). No hace falta reiniciar el programa.
