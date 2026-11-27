@@ -96,4 +96,18 @@ router.get('/reporte', async (req, res) => {
   res.json({ totales, funciones: reporte });
 });
 
+// Estadísticas del microservicio de reportes. Se consultan por HTTP: si ese
+// servicio está apagado, solo esta sección deja de funcionar.
+router.get('/estadisticas', async (req, res) => {
+  const url = `${process.env.REPORTES_URL || 'http://localhost:3002'}/estadisticas`;
+  let respuesta;
+  try {
+    respuesta = await fetch(url, { signal: AbortSignal.timeout(3000) });
+  } catch {
+    throw new ErrorNegocio('El servicio de reportes no está disponible. ¿Está encendido?', 503);
+  }
+  if (!respuesta.ok) throw new ErrorNegocio('El servicio de reportes respondió con un error', 502);
+  res.json(await respuesta.json());
+});
+
 module.exports = router;

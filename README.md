@@ -1,242 +1,186 @@
-<p align="center"><img src="public/logo.svg" alt="Logo de Cine Atlántico" width="120"></p>
+<p align="center"><img src="servicios/boletos/public/logo.svg" alt="Logo de Cine Atlántico" width="120"></p>
 
 <h1 align="center">Cine Atlántico</h1>
-<p align="center">Compra y asignación de boletos de cine</p>
+<p align="center">Compra y asignación de boletos de cine con microservicios, MongoDB y RabbitMQ</p>
 
 Una página web para comprar boletos de cine. En ella puedes:
 
 - ver la cartelera con los horarios,
 - elegir tus asientos en un mapa de la sala, o pedir que el sistema elija los mejores por ti,
-- recibir tus boletos con un código,
+- recibir tus boletos **por correo, con un código QR por boleto**,
 - consultar o cancelar tus compras.
 
-También tiene un panel de administración para agregar películas, salas y funciones y para ver las ventas.
+También tiene un panel de administración para agregar películas, salas y funciones, y para ver las ventas y las estadísticas en vivo.
+
+El sistema está dividido en **tres microservicios** (boletos, notificaciones y reportes) que se comunican con mensajes a través de **RabbitMQ**.
 
 **Películas en cartelera:** Star Wars, Jurassic Park, Harry Potter, Minions, Parasite y Obsesión.
 
 ![Mapa de asientos](docs/seleccion.png)
 
-**Documentación técnica completa** (arquitectura, modelo de datos, flujo de compra, API y pruebas, con diagramas): [docs/DOCUMENTACION.md](docs/DOCUMENTACION.md). También está en [Word](docs/Cine-Atlantico-Documentacion.docx) y [PDF](docs/Cine-Atlantico-Documentacion.pdf).
+**Documentación técnica completa** (arquitectura, modelo de datos, mensajería, API y pruebas, con diagramas): [docs/DOCUMENTACION.md](docs/DOCUMENTACION.md). También está en [Word](docs/Cine-Atlantico-Documentacion.docx) y [PDF](docs/Cine-Atlantico-Documentacion.pdf).
+
+**Guía para presentar el proyecto:** [docs/GUIA-EXPOSICION.md](docs/GUIA-EXPOSICION.md)
 
 ---
 
 ## Índice
 
 1. [¿Qué necesito?](#qué-necesito)
-2. [Paso 1: Instalar Node.js](#paso-1-instalar-nodejs)
-3. [Paso 2: Descargar el proyecto](#paso-2-descargar-el-proyecto)
-4. [Paso 3: Abrir una terminal en la carpeta del proyecto](#paso-3-abrir-una-terminal-en-la-carpeta-del-proyecto)
-5. [Paso 4: Instalar las dependencias](#paso-4-instalar-las-dependencias)
-6. [Paso 5: Preparar la base de datos MongoDB](#paso-5-preparar-la-base-de-datos-mongodb)
-7. [Paso 6: Crear el archivo de configuración `.env`](#paso-6-crear-el-archivo-de-configuración-env)
-8. [Paso 7: Cargar las películas de ejemplo](#paso-7-cargar-las-películas-de-ejemplo)
-9. [Paso 8: Encender el programa](#paso-8-encender-el-programa)
-10. [Cómo usar el programa](#cómo-usar-el-programa)
-11. [Agregar las imágenes de cartelera (pósters)](#agregar-las-imágenes-de-cartelera-pósters)
-12. [Apagar y volver a encender](#apagar-y-volver-a-encender)
-13. [Solución de problemas](#solución-de-problemas)
-14. [Para curiosos: cómo funciona por dentro](#para-curiosos-cómo-funciona-por-dentro)
+2. [Opción A (recomendada): encender todo con Docker](#opción-a-recomendada-encender-todo-con-docker)
+3. [Opción B: para programar (Node.js + Docker)](#opción-b-para-programar-nodejs--docker)
+4. [Las páginas del sistema](#las-páginas-del-sistema)
+5. [Cómo usar el programa](#cómo-usar-el-programa)
+6. [Agregar las imágenes de cartelera (pósters)](#agregar-las-imágenes-de-cartelera-pósters)
+7. [Apagar, volver a encender y reiniciar los datos](#apagar-volver-a-encender-y-reiniciar-los-datos)
+8. [Solución de problemas](#solución-de-problemas)
+9. [Ramas del repositorio (Git)](#ramas-del-repositorio-git)
+10. [Para curiosos: cómo funciona por dentro](#para-curiosos-cómo-funciona-por-dentro)
 
 ---
 
 ## ¿Qué necesito?
 
-| Programa | ¿Para qué sirve? | ¿Cuesta? |
-|---|---|---|
-| **Node.js** | Ejecuta el programa (el "motor") | Gratis |
-| **MongoDB** | La base de datos donde se guardan películas, funciones y compras | Gratis |
-| Un navegador (Chrome, Edge, Firefox…) | Para usar la página | Gratis |
+| Programa | ¿Para qué sirve? | ¿Cuándo lo necesito? | ¿Cuesta? |
+|---|---|---|---|
+| **Docker Desktop** | Enciende MongoDB, RabbitMQ, el buzón de correos y los microservicios, sin instalarlos uno por uno | **Siempre** | Gratis para uso personal y educativo |
+| **Node.js** (versión LTS) | Ejecuta el código directamente en tu computadora | Solo en la **Opción B** | Gratis |
+| Un navegador (Chrome, Edge, Firefox…) | Para usar la página | Siempre | Gratis |
+| Git | Para descargar el proyecto con un comando | Opcional | Gratis |
 
-> **¿Qué es una "terminal"?** Es una ventana donde escribes comandos en texto. En Windows se llama **Símbolo del sistema** o **PowerShell**; en Mac y Linux se llama **Terminal**. En esta guía, todo lo que aparece en un recuadro gris así:
+> **¿Qué es Docker?** Es un programa que ejecuta otros programas dentro de "contenedores": cajas aisladas que ya traen todo lo que necesitan. Gracias a él no tienes que instalar MongoDB ni RabbitMQ en tu computadora: Docker los descarga y los enciende por ti.
+
+> **¿Qué es una "terminal"?** Es una ventana donde escribes comandos en texto. En Windows se llama **Símbolo del sistema** o **PowerShell**; en Mac y Linux se llama **Terminal**. Todo lo que aparece en un recuadro gris así:
 > ```
-> npm start
+> docker compose up -d --build
 > ```
 > es un comando: lo escribes (o lo copias y pegas) en la terminal y presionas **Enter**.
 
 ---
 
-## Paso 1: Instalar Node.js
+## Opción A (recomendada): encender todo con Docker
 
-1. Entra a **https://nodejs.org/es**.
-2. Descarga la versión que dice **LTS** (es la más estable).
-3. Abre el instalador y da clic en **Siguiente** en todas las pantallas. Las opciones que vienen marcadas están bien.
-4. **Comprueba que quedó instalado:** abre una terminal **nueva** y escribe:
-   ```
-   node -v
-   ```
-   Debe aparecer un número de versión, por ejemplo `v22.11.0`. Después escribe:
-   ```
-   npm -v
-   ```
-   También debe aparecer un número, por ejemplo `10.9.0`.
+Con esta opción **solo necesitas instalar Docker Desktop**. Un solo comando enciende los 6 componentes del sistema.
 
-> **Importante:** si dice *"node no se reconoce como un comando"*, cierra la terminal, abre una nueva y vuelve a intentar. Si sigue igual, reinicia la computadora.
+### Paso 1: Instalar Docker Desktop
 
----
+**Windows**
+1. Entra a **https://www.docker.com/products/docker-desktop/** y descarga **Docker Desktop para Windows**.
+2. Abre el instalador y deja marcada la opción **"Use WSL 2"** (la recomendada). Da clic en **OK** hasta terminar.
+3. **Reinicia la computadora** si el instalador lo pide.
+4. Abre **Docker Desktop** desde el menú de inicio. La primera vez te pedirá aceptar los términos; puedes omitir el inicio de sesión ("Skip").
+5. Espera a que abajo a la izquierda diga **"Engine running"** (motor encendido).
 
-## Paso 2: Descargar el proyecto
+> Si Docker Desktop te pide instalar o actualizar **WSL**, acepta y sigue las instrucciones que muestra; después reinicia.
+
+**Mac**
+1. Descarga **Docker Desktop para Mac** desde la misma página. Elige **Apple Silicon** (chips M1, M2, M3…) o **Intel** según tu Mac (lo ves en el menú de la manzana → *Acerca de esta Mac*).
+2. Abre el archivo `.dmg` y arrastra Docker a **Aplicaciones**.
+3. Abre **Docker** desde Aplicaciones y espera a que diga **"Engine running"**.
+
+**Linux:** sigue la guía oficial en https://docs.docker.com/desktop/setup/install/linux/
+
+**Comprueba que quedó instalado:** abre una terminal y escribe:
+```
+docker --version
+docker compose version
+```
+Deben aparecer dos números de versión.
+
+### Paso 2: Descargar el proyecto
 
 Elige **una** de estas dos formas:
 
-- **Forma fácil (sin Git):** entra a https://github.com/LeoCas4/Cine-Atlantico, da clic en el botón verde **Code** y luego en **Download ZIP**. Descomprime el archivo (clic derecho → *Extraer todo*) y guarda la carpeta en un lugar fácil de encontrar, por ejemplo en el **Escritorio**.
-- **Con Git** (si ya lo sabes usar):
+- **Sin Git:** entra a https://github.com/LeoCas4/Cine-Atlantico, da clic en el botón verde **Code** y luego en **Download ZIP**. Descomprime el archivo (clic derecho → *Extraer todo*) y guarda la carpeta en un lugar fácil de encontrar, por ejemplo en el **Escritorio**.
+- **Con Git:**
   ```
   git clone https://github.com/LeoCas4/Cine-Atlantico.git cine
   ```
 
-Al final debes tener una carpeta que contiene, entre otros, los archivos `package.json` y `README.md`. En esta guía la llamamos **`cine`**. Si la descargaste como ZIP desde GitHub se llamará `Cine-Atlantico-main`; puedes dejarle ese nombre o cambiarlo a `cine`, el programa funciona igual.
+Al final tendrás una carpeta con los archivos `docker-compose.yml`, `package.json` y `README.md`, entre otros. En esta guía la llamamos **`cine`**; si la descargaste como ZIP se llamará `Cine-Atlantico-main`, y funciona igual.
+
+### Paso 3: Abrir una terminal en la carpeta del proyecto
+
+**Windows:** abre la carpeta en el Explorador de archivos, da clic en la barra de direcciones (arriba), escribe `cmd` y presiona **Enter**.
+
+**Mac:** abre **Terminal**, escribe `cd ` (con un espacio al final), **arrastra la carpeta** a la ventana y presiona **Enter**.
+
+**Linux:** clic derecho dentro de la carpeta → *Abrir en una terminal*.
+
+**Comprueba que estás en el lugar correcto:** escribe `dir` (Windows) o `ls` (Mac/Linux). En la lista debe aparecer `docker-compose.yml`.
+
+### Paso 4: Encender el sistema
+
+Con **Docker Desktop abierto**, escribe:
+```
+docker compose up -d --build
+```
+
+- La **primera vez** tarda de 2 a 5 minutos: Docker descarga MongoDB, RabbitMQ y Mailpit, y prepara los microservicios. Las siguientes veces tarda segundos.
+- Cuando termine, comprueba que todo está encendido:
+  ```
+  docker compose ps
+  ```
+  Deben aparecer **6 servicios**: `mongo`, `rabbitmq`, `mailpit`, `boletos`, `notificaciones` y `reportes`, todos con estado **Up** (encendido).
+- Las películas de ejemplo se cargan solas la primera vez.
+
+> **Espera unos 15 segundos** después de encender antes de comprar: RabbitMQ tarda un poco en estar listo, y los servicios se conectan solos en cuanto lo está.
+
+### Paso 5: Abrir la página
+
+Entra a **http://localhost:3000** en tu navegador. ¡Listo! En [Las páginas del sistema](#las-páginas-del-sistema) están las demás direcciones.
+
+> No necesitas dejar ninguna terminal abierta: los servicios siguen encendidos en Docker aunque la cierres.
 
 ---
 
-## Paso 3: Abrir una terminal en la carpeta del proyecto
+## Opción B: para programar (Node.js + Docker)
 
-Todos los comandos siguientes deben ejecutarse **dentro de la carpeta `cine`**.
+Usa esta opción si vas a modificar el código: los tres microservicios corren en tu computadora con Node.js y ves sus mensajes en la terminal, mientras Docker solo enciende la infraestructura (MongoDB, RabbitMQ y Mailpit).
 
-**En Windows:**
-1. Abre la carpeta `cine` en el Explorador de archivos.
-2. Da clic en la barra de direcciones (arriba, donde aparece la ruta de la carpeta).
-3. Escribe `cmd` y presiona **Enter**. Se abrirá una terminal que ya está dentro de la carpeta.
-
-**En Mac:**
-1. Abre la app **Terminal** (búscala con `Cmd + Espacio`).
-2. Escribe `cd ` (con un espacio al final), **arrastra la carpeta `cine`** a la ventana de la Terminal y presiona **Enter**.
-
-**En Linux:** clic derecho dentro de la carpeta → *Abrir en una terminal*.
-
-**Comprueba que estás en el lugar correcto:** escribe `dir` (Windows) o `ls` (Mac/Linux). En la lista debe aparecer `package.json`.
-
----
-
-## Paso 4: Instalar las dependencias
-
-Las dependencias son piezas de código que usa el programa. Se descargan automáticamente con:
-
-```
-npm install
-```
-
-Espera a que termine; puede tardar uno o dos minutos. Al final verás algo como `added 120 packages`. Aparecerá una carpeta nueva llamada `node_modules`: **no la borres ni la modifiques**.
-
-> Los mensajes amarillos que dicen `WARN` o `npm notice` son normales y puedes ignorarlos.
-
----
-
-## Paso 5: Preparar la base de datos MongoDB
-
-MongoDB es una base de datos **no relacional** (NoSQL): guarda la información como documentos parecidos a fichas, no como tablas. Elige **una** de estas opciones:
-
-### Opción A (recomendada): instalar MongoDB en tu computadora
-
-**Windows**
-1. Entra a **https://www.mongodb.com/try/download/community**.
-2. Deja seleccionada la versión más reciente, plataforma **Windows** y paquete **msi**. Da clic en **Download**.
-3. Abre el instalador:
-   - Elige **Complete**.
-   - Deja marcada la casilla **"Install MongoD as a Service"**. Así MongoDB se enciende solo cada vez que prendes la computadora.
-   - Puedes dejar marcado **MongoDB Compass**: es una aplicación para ver los datos guardados (opcional).
-4. Da clic en **Siguiente** hasta terminar. ¡Listo! MongoDB ya está funcionando.
-
-**Mac** (necesitas tener [Homebrew](https://brew.sh/es/) instalado)
-```
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb-community
-```
-
-**Linux (Ubuntu):** sigue la guía oficial en https://www.mongodb.com/docs/manual/administration/install-on-linux/
-
-Con esta opción **no necesitas cambiar nada** en el Paso 6.
-
-### Opción B: usar MongoDB Atlas (en internet, sin instalar nada)
-
-1. Crea una cuenta gratis en **https://www.mongodb.com/cloud/atlas/register**.
-2. Crea un cluster y elige el plan **M0 – Free** (gratis para siempre). Puedes dejar el proveedor y la región que vienen por defecto.
-3. Atlas te pedirá crear un **usuario de base de datos**. Escribe un nombre (por ejemplo `cineuser`) y una contraseña **sin caracteres especiales** como `@`, `#` o `/`. **Anótalos.**
-4. En **Network Access** (acceso de red), da clic en **Add IP Address** → **Allow access from anywhere** (`0.0.0.0/0`). Esta opción solo es adecuada para pruebas.
-5. Ve a **Database** → botón **Connect** → **Drivers**. Copia la dirección que aparece; se ve así:
+1. **Instala Docker Desktop** (Paso 1 de la Opción A) y **Node.js**: entra a **https://nodejs.org/es**, descarga la versión **LTS** e instálala con las opciones por defecto. Comprueba con `node -v` y `npm -v`.
+2. **Descarga el proyecto y abre una terminal en su carpeta** (Pasos 2 y 3 de la Opción A).
+3. **Instala las dependencias** (las librerías del proyecto):
    ```
-   mongodb+srv://cineuser:<db_password>@cluster0.abcde.mongodb.net/?retryWrites=true&w=majority
+   npm install
    ```
-6. Guarda esa dirección; la usarás en el Paso 6.
+4. **Crea el archivo de configuración `.env`** copiando la plantilla:
+   - Windows: `copy .env.example .env`
+   - Mac / Linux: `cp .env.example .env`
 
-### Opción C: con Docker (solo si ya usas Docker)
-```
-docker compose up -d
-```
+   Los valores de la plantilla ya funcionan; no tienes que cambiar nada.
+5. **Enciende solo la infraestructura** con Docker:
+   ```
+   docker compose up -d mongo rabbitmq mailpit
+   ```
+6. **Enciende los tres microservicios:**
+   ```
+   npm start
+   ```
+   Verás los mensajes de cada servicio con su nombre y un color distinto: `[boletos]`, `[notificaciones]` y `[reportes]`. Espera a que los tres digan **"Conectado a RabbitMQ"** y entra a **http://localhost:3000**.
 
----
+> Con esta opción, **no cierres la terminal** de `npm start`: si la cierras, se apagan los tres servicios.
 
-## Paso 6: Crear el archivo de configuración `.env`
+También puedes encender cada servicio por separado, en terminales distintas:
 
-El archivo `.env` le dice al programa **dónde está la base de datos**. Ya existe una plantilla llamada `.env.example`; solo hay que copiarla con el nombre `.env`.
-
-En la terminal (dentro de la carpeta `cine`) escribe:
-
-- **Windows:**
-  ```
-  copy .env.example .env
-  ```
-- **Mac / Linux:**
-  ```
-  cp .env.example .env
-  ```
-
-**Si elegiste la Opción A o C,** no tienes que hacer nada más.
-
-**Si elegiste la Opción B (Atlas):** abre el archivo `.env` con el Bloc de notas o cualquier editor de texto y cambia la línea `MONGODB_URI` por tu dirección de Atlas. Haz dos cambios a esa dirección:
-1. Reemplaza `<db_password>` por tu contraseña. Borra también los símbolos `<` y `>`.
-2. Agrega **`cine`** justo después de `.mongodb.net/`.
-
-Ejemplo final:
-```
-MONGODB_URI=mongodb+srv://cineuser:MiClave123@cluster0.abcde.mongodb.net/cine?retryWrites=true&w=majority
-PORT=3000
-ADMIN_KEY=admin123
-```
-
-| Variable | Significado |
+| Comando | Qué enciende |
 |---|---|
-| `MONGODB_URI` | Dirección de la base de datos |
-| `PORT` | Puerto de la página (se abre en `http://localhost:3000`) |
-| `ADMIN_KEY` | Contraseña del panel de Administración. **Cámbiala** si vas a compartir el programa |
-
-> **Consejo:** en Windows, si no ves el archivo `.env` en el Explorador, activa *Vista → Mostrar → Extensiones de nombre de archivo* y *Elementos ocultos*.
+| `npm run boletos` | Página web y API REST (puerto 3000) |
+| `npm run notificaciones` | Servicio de correos |
+| `npm run reportes` | Servicio de estadísticas (puerto 3002) |
 
 ---
 
-## Paso 7: Cargar las películas de ejemplo
+## Las páginas del sistema
 
-Este comando llena la base de datos con **3 salas**, **6 películas** y funciones para hoy y los próximos 2 días:
+| Dirección | Qué es | Usuario / contraseña |
+|---|---|---|
+| **http://localhost:3000** | **Cine Atlántico**: la página para comprar boletos | Administración: clave `admin123` |
+| **http://localhost:8025** | **Mailpit**: buzón de correos de prueba. Aquí llegan los correos con los boletos | No pide |
+| **http://localhost:15672** | **Panel de RabbitMQ**: colas y mensajes en vivo | `guest` / `guest` |
+| **http://localhost:3002/estadisticas** | **Servicio de reportes**: estadísticas en formato JSON | No pide |
 
-```
-npm run seed
-```
-
-Debe aparecer:
-```
-Datos cargados: 3 salas, 6 películas, 45 funciones
-```
-(El número de funciones puede ser menor si ya es tarde, porque no se crean funciones con horarios que ya pasaron.)
-
-> **Cuidado:** este comando **borra todo** lo que haya en la base de datos (incluidas las compras) y vuelve a empezar desde cero. Úsalo solo la primera vez o cuando quieras reiniciar todo.
-
----
-
-## Paso 8: Encender el programa
-
-```
-npm start
-```
-
-Cuando aparezca este mensaje, el programa ya está encendido:
-```
-MongoDB conectado: ...
-Cine listo en http://localhost:3000
-```
-
-Ahora abre tu navegador y entra a **http://localhost:3000**
-
-> **Importante:** no cierres la terminal mientras usas el programa; si la cierras, la página deja de funcionar.
+> **Sobre los correos:** el servicio de notificaciones envía los correos a **Mailpit**, un buzón de prueba que vive en tu computadora. Los correos **no llegan a cuentas reales** (Gmail, Outlook…), así que puedes usar cualquier email al comprar. Para enviarlos de verdad bastaría con poner los datos de un servidor SMTP real en las variables `SMTP_*`.
 
 ---
 
@@ -245,25 +189,32 @@ Ahora abre tu navegador y entra a **http://localhost:3000**
 ### Comprar boletos
 1. En **Cartelera**, busca la película que quieres ver y da clic en un **horario**.
 2. Elige tus asientos de una de estas dos formas:
-   - **Tú eliges:** da clic en los asientos grises del mapa. Se pondrán **verdes**. Si das clic otra vez en un asiento verde, lo quitas de tu selección.
+   - **Tú eliges:** da clic en los asientos grises del mapa. Se pondrán **naranjas**. Si das clic otra vez en un asiento naranja, lo quitas de tu selección.
    - **Automático:** escribe cuántos boletos quieres y presiona **"Elegir mejores asientos"**. El sistema busca lugares juntos, en el centro y a buena distancia de la pantalla.
 3. Escribe tu **nombre** y **email**, elige el método de pago y presiona **Comprar**.
-4. Verás tus boletos. **Anota el código de compra** (por ejemplo `CIN-U3B4A4`).
+4. Verás tus boletos con el **código de compra** (por ejemplo `CIN-U3B4A4`).
+5. Abre **http://localhost:8025**: en unos segundos llega el correo con tus boletos y un **código QR por boleto**.
 
 Colores del mapa: **gris** = disponible · **gris con borde naranja** = VIP (cuesta un poco más) · **naranja** = tu selección · **negro** = vendido.
 
 ### Consultar o cancelar una compra
 1. Ve a **Mis boletos**.
 2. Escribe tu **código de compra** o tu **email** y presiona **Buscar**.
-3. Para cancelar, presiona **Cancelar compra** y confirma con tu email. Los asientos vuelven a quedar disponibles para otras personas.
+3. Para cancelar, presiona **Cancelar compra** y confirma con tu email. Los asientos vuelven a quedar disponibles y llega un correo de cancelación a Mailpit.
 
 ### Administración
 1. Ve a **Administración** y escribe la clave (por defecto **`admin123`**).
 2. Ahí puedes:
-   - agregar **películas** nuevas, con su imagen de póster si quieres (ver la siguiente sección),
+   - agregar **películas** nuevas, con su imagen de póster si quieres,
    - crear **salas** con el número de filas y asientos, pasillos y filas VIP,
    - programar **funciones**. El sistema no te deja poner dos funciones a la misma hora en la misma sala,
-   - ver el **reporte de ventas**: boletos vendidos, ingresos y qué tan llena está cada función.
+   - ver el **reporte de ventas** por función: boletos vendidos, ingresos y ocupación,
+   - ver las **estadísticas en vivo** que calcula el servicio de reportes a partir de los mensajes de RabbitMQ: compras, cancelaciones e ingresos por película.
+
+### Ver los mensajes en RabbitMQ
+1. Entra a **http://localhost:15672** con usuario `guest` y contraseña `guest`.
+2. Abre la pestaña **Queues and Streams**. Verás las colas `notificaciones` y `reportes` (y sus colas `.fallidos`).
+3. Cada compra o cancelación pasa por esas colas. Normalmente se vacían al instante porque los servicios procesan los mensajes enseguida.
 
 ---
 
@@ -274,7 +225,7 @@ Cada película puede mostrar su póster en la cartelera. Mientras no agregues la
 ### Para las 6 películas incluidas
 
 1. Busca en internet el póster de cada película. Por ejemplo, en Google Imágenes o en https://www.themoviedb.org: busca la película, da clic en el póster, luego clic derecho sobre la imagen y elige **Guardar imagen como...**.
-2. Guarda cada imagen en la carpeta **`cine/public/posters/`** con **exactamente** estos nombres:
+2. Guarda cada imagen en la carpeta **`servicios/boletos/public/posters/`** con **exactamente** estos nombres:
 
    | Película | Nombre del archivo |
    |---|---|
@@ -288,9 +239,7 @@ Cada película puede mostrar su póster en la cartelera. Mientras no agregues la
    - También funcionan imágenes **.png** o **.webp** con el mismo nombre, por ejemplo `minions.png`.
    - Escribe los nombres **en minúsculas** y con guion medio (`-`), sin espacios.
    - Lo ideal son imágenes verticales, como un póster real (por ejemplo, 400 × 600 píxeles).
-3. Recarga la página en el navegador (tecla **F5**). No hace falta reiniciar el programa.
-
-> **Importante:** si cargaste las películas con una versión anterior del proyecto que no tenía pósters, ejecuta una vez `npm run seed` para que cada película quede asociada a su imagen. Recuerda que este comando borra las compras.
+3. Recarga la página en el navegador (tecla **F5**). No hace falta reiniciar nada, ni siquiera con Docker.
 
 > **Consejo:** en Windows, si no ves la extensión (`.jpg`) de los archivos, activa *Vista → Mostrar → Extensiones de nombre de archivo* para comprobar que el nombre está bien escrito. Un error común es que el archivo quede como `minions.jpg.jpg`.
 
@@ -298,24 +247,29 @@ Cada película puede mostrar su póster en la cartelera. Mientras no agregues la
 
 En el formulario **Nueva película** hay un campo **Imagen del póster (opcional)**. Puedes escribir:
 
-- una imagen de la carpeta `posters`: guarda el archivo, por ejemplo `public/posters/mi-pelicula.jpg`, y escribe `/posters/mi-pelicula.jpg`, **o**
-- la dirección completa de una imagen en internet, por ejemplo `https://.../poster.jpg`. Ten en cuenta que, si esa página borra la imagen, dejará de verse.
+- una imagen de la carpeta `posters`: guarda el archivo, por ejemplo `servicios/boletos/public/posters/mi-pelicula.jpg`, y escribe `/posters/mi-pelicula.jpg`, **o**
+- la dirección completa de una imagen en internet, por ejemplo `https://.../poster.jpg`.
 
 Si dejas el campo vacío, se usa el póster genérico.
 
 ---
 
-## Apagar y volver a encender
+## Apagar, volver a encender y reiniciar los datos
 
-- **Para apagar:** en la terminal donde está corriendo el programa, presiona **`Ctrl + C`**.
-- **Para volver a encenderlo otro día:**
-  1. Abre una terminal en la carpeta `cine` (Paso 3).
-  2. Escribe `npm start`.
-  3. Entra a http://localhost:3000
+Todos los comandos se escriben en una terminal abierta en la carpeta del proyecto.
 
-  **No** necesitas repetir `npm install` ni `npm run seed`. Tus compras siguen guardadas.
+| Quiero… | Opción A (Docker) | Opción B (Node.js) |
+|---|---|---|
+| **Apagar** | `docker compose stop` | `Ctrl + C` en la terminal de `npm start`, y después `docker compose stop` |
+| **Volver a encender** | Abrir Docker Desktop y `docker compose up -d` | `docker compose up -d mongo rabbitmq mailpit` y `npm start` |
+| **Generar funciones nuevas** (borra las compras) | `docker compose exec boletos node servicios/boletos/seed.js` | `npm run seed` |
+| **Borrar todo y empezar de cero** | `docker compose down -v` y luego `docker compose up -d --build` | Igual que en la Opción A, para la infraestructura |
+| **Ver los mensajes de un servicio** | `docker compose logs -f notificaciones` (cambia el nombre por `boletos` o `reportes`; sal con `Ctrl + C`) | Aparecen en la terminal de `npm start` |
+| **Aplicar cambios del código** | `docker compose up -d --build` | Detener con `Ctrl + C` y volver a `npm start` |
 
-> **Consejo:** las funciones de ejemplo son de los próximos 3 días. Si pasan varios días y la cartelera aparece vacía, ejecuta `npm run seed` para generar funciones nuevas.
+Tus compras se guardan aunque apagues la computadora. Solo `docker compose down -v` las borra.
+
+> **Consejo:** las funciones de ejemplo son de hoy y los próximos 2 días. Si pasan varios días y la cartelera aparece vacía, usa el comando de **Generar funciones nuevas**.
 
 ---
 
@@ -323,57 +277,128 @@ Si dejas el campo vacío, se usa el póster genérico.
 
 | Mensaje o problema | Qué significa y cómo arreglarlo |
 |---|---|
-| `'node' / 'npm' no se reconoce como un comando` | Node.js no está instalado o la terminal se abrió antes de instalarlo. Cierra la terminal y abre una nueva; si sigue igual, reinicia la computadora o reinstala Node.js (Paso 1). |
-| `npm ERR! enoent ... package.json` | No estás dentro de la carpeta `cine`. Repite el Paso 3. |
-| `No se pudo conectar a MongoDB: connect ECONNREFUSED 127.0.0.1:27017` | MongoDB no está encendido. **Windows:** presiona `Win + R`, escribe `services.msc`, busca **MongoDB Server**, clic derecho → **Iniciar**. **Mac:** `brew services start mongodb-community`. |
-| `bad auth : authentication failed` (Atlas) | El usuario o la contraseña en `.env` son incorrectos. Revisa que borraste los símbolos `< >`. |
-| `Could not connect to any servers in your MongoDB Atlas cluster` | Atlas no permite conectarse desde tu red. Repite el punto 4 de la Opción B (Network Access). |
-| `Error: listen EADDRINUSE: address already in use :::3000` | El programa ya está abierto en otra terminal, u otro programa usa el puerto 3000. Cierra la otra terminal, o cambia `PORT=3001` en `.env` y entra a http://localhost:3001 |
-| La cartelera dice "No hay funciones programadas" | Las funciones de ejemplo ya pasaron. Ejecuta `npm run seed`. |
-| La página no carga en el navegador | Revisa que la terminal muestre `Cine listo en http://localhost:3000` y que no la hayas cerrado. |
-| "Clave de administrador incorrecta" | Usa el valor de `ADMIN_KEY` que está en tu archivo `.env` (por defecto `admin123`). |
-| No aparece el póster que agregué | Revisa que el archivo esté en `public/posters/` y que el nombre sea exactamente el de la tabla, en minúsculas y sin `.jpg.jpg`. Luego recarga con **Ctrl + F5**. |
+| `'docker' no se reconoce como un comando` | Docker Desktop no está instalado, o la terminal se abrió antes de instalarlo. Cierra la terminal y abre una nueva; si sigue igual, reinicia la computadora. |
+| `Cannot connect to the Docker daemon` o `error during connect` | Docker Desktop no está abierto. Ábrelo y espera a que diga **"Engine running"**. |
+| Docker Desktop pide **WSL** o dice que la virtualización está desactivada (Windows) | Acepta instalar o actualizar WSL y reinicia. Si dice que falta la virtualización, hay que activarla en el BIOS de la computadora (busca "activar virtualización" con la marca de tu computadora). |
+| `no configuration file provided: not found` | No estás en la carpeta del proyecto. Repite el Paso 3. |
+| `port is already allocated` o `address already in use` | Otro programa usa ese puerto, por ejemplo un MongoDB instalado aparte (27017) o una copia anterior del cine (3000). Apaga ese programa, o reinicia la computadora y vuelve a intentar. |
+| La página no carga en http://localhost:3000 | Revisa con `docker compose ps` que `boletos` diga **Up**. Si acabas de encender, espera 15 segundos. Para ver el error: `docker compose logs boletos`. |
+| No llega el correo a Mailpit | Revisa que `notificaciones` esté encendido (`docker compose ps`) y mira sus mensajes con `docker compose logs notificaciones`. Si el servicio estuvo apagado, el correo llega en cuanto se encienda: el mensaje esperó en la cola. |
+| "El servicio de reportes no está disponible" en Administración | El servicio `reportes` está apagado. Enciéndelo con `docker compose up -d reportes` (o `npm run reportes` en la Opción B). La venta de boletos sigue funcionando aunque esté apagado. |
+| Mensajes `RabbitMQ no disponible ... reintento` al encender | Es normal los primeros segundos: RabbitMQ aún está arrancando y los servicios reintentan solos. Si siguen después de un minuto, revisa que `rabbitmq` esté encendido. |
+| La cartelera dice "No hay funciones programadas" | Las funciones de ejemplo ya pasaron. Usa el comando de **Generar funciones nuevas**. |
+| "Clave de administrador incorrecta" | Usa `admin123`, o el valor de `ADMIN_KEY` en tu `.env` (Opción B) o en `docker-compose.yml` (Opción A). |
 | "Asientos ya vendidos: …" al comprar | Alguien más compró esos asientos antes que tú. El mapa se actualiza solo; elige otros asientos. |
+| (Opción B) `'node' / 'npm' no se reconoce como un comando` | Node.js no está instalado o la terminal se abrió antes de instalarlo. Abre una terminal nueva o reinicia. |
+| (Opción B) `npm ERR! enoent ... package.json` | No estás dentro de la carpeta del proyecto. |
+
+---
+
+## Ramas del repositorio (Git)
+
+El proyecto usa un flujo de trabajo con ramas, para que cada cambio se desarrolle por separado y se una cuando está terminado y probado:
+
+| Rama | Para qué sirve |
+|---|---|
+| `main` | Versión estable, lista para usar y presentar. Solo recibe cambios desde `develop` |
+| `develop` | Rama de integración: aquí se juntan las ramas de trabajo terminadas |
+| `refactor/estructura-microservicios` | Reorganizó el código en la carpeta `servicios/` |
+| `feature/mensajeria-rabbitmq` | Publicación de eventos en RabbitMQ y patrón outbox |
+| `feature/servicio-notificaciones` | Microservicio de correos con códigos QR |
+| `feature/servicio-reportes` | Microservicio de estadísticas |
+| `feature/docker-compose` | Encender todo el sistema con Docker Compose |
+| `test/pruebas-mensajeria` | Pruebas automáticas de la mensajería |
+| `docs/microservicios` | Este README y la documentación de la versión 2 |
+
+Versiones marcadas con etiquetas (*tags*): **`v1.0.0`** (sistema monolítico original) y **`v2.0.0`** (microservicios con RabbitMQ).
+
+**Para hacer un cambio nuevo:**
+```
+git switch develop
+git pull
+git switch -c feature/nombre-del-cambio
+# ... editar, probar ...
+git add .
+git commit -m "Describe aquí qué cambiaste"
+git push -u origin feature/nombre-del-cambio
+```
+Después, en GitHub, abre un **Pull Request** de tu rama hacia `develop`.
 
 ---
 
 ## Para curiosos: cómo funciona por dentro
 
+### Arquitectura
+
+![Arquitectura de microservicios](docs/diagramas/arquitectura.png)
+
+| Microservicio | Qué hace | Se comunica con |
+|---|---|---|
+| **Boletos** (`servicios/boletos/`) | Página web, API REST, reserva de asientos y compras. **Publica** eventos | Navegador (HTTP), MongoDB `cine`, RabbitMQ |
+| **Notificaciones** (`servicios/notificaciones/`) | **Consume** los eventos y envía los correos con QR | RabbitMQ, Mailpit (SMTP) |
+| **Reportes** (`servicios/reportes/`) | **Consume** los eventos y calcula estadísticas | RabbitMQ, MongoDB `cine_reportes`, HTTP `/estadisticas` |
+
+### Eventos
+
+| Evento | Cuándo se publica | Quién lo escucha | Qué datos lleva |
+|---|---|---|---|
+| `compra.creada` | Al completarse una compra | Notificaciones (correo con boletos) y Reportes (suma la venta) | Código, cliente, boletos, total, película, sala y horario |
+| `compra.cancelada` | Al cancelar una compra | Notificaciones (correo de cancelación) y Reportes (resta la venta) | Los mismos datos, con estado `cancelada` |
+
+Los eventos se publican en el exchange **`cine.eventos`** (tipo *topic*). Cada servicio tiene su propia cola suscrita a `compra.*`, así que **cada servicio recibe su propia copia** de cada evento.
+
+### Técnicas de confiabilidad
+
+- **La reserva de asientos no pasa por RabbitMQ:** sigue siendo una operación indivisible de MongoDB, porque el cliente necesita saber al instante si consiguió su asiento. La mensajería se usa para lo que ocurre **después** de la compra.
+- **Patrón outbox:** si RabbitMQ no está disponible, el servicio de boletos guarda el evento en MongoDB (colección `eventospendientes`) y lo reenvía al recuperar la conexión. La venta nunca se detiene y no se pierde ningún evento.
+- **Confirmaciones del publicador:** el servicio de boletos espera a que RabbitMQ confirme que guardó cada mensaje.
+- **Mensajes y colas persistentes:** sobreviven a un reinicio de RabbitMQ.
+- **Confirmación de procesamiento (*ack*):** un mensaje se borra de la cola solo cuando el servicio terminó de procesarlo. Si un servicio está apagado, sus mensajes esperan en la cola.
+- **Reintento y cola de fallidos:** si procesar un mensaje falla, se reintenta una vez; si vuelve a fallar, pasa a la cola `<servicio>.fallidos` en lugar de perderse.
+- **Idempotencia en reportes:** cada evento se guarda con su id único; si RabbitMQ entrega un mensaje repetido, no se cuenta dos veces.
+- **Reconexión automática:** si RabbitMQ se reinicia, los servicios se reconectan solos.
+
 ### Estructura de carpetas
 ```
-cine/
-├── .env.example          ← plantilla de configuración
-├── package.json          ← lista de dependencias y comandos (npm start, npm run seed…)
-├── docker-compose.yml    ← para levantar MongoDB con Docker (opcional)
-├── src/                  ← el servidor (backend)
-│   ├── server.js         ← punto de entrada: conecta a MongoDB y enciende la web
-│   ├── app.js            ← configuración de Express y manejo de errores
-│   ├── seed.js           ← datos de ejemplo (películas, salas, funciones)
-│   ├── asignacion.js     ← algoritmo que elige los mejores asientos
-│   ├── servicioCompras.js← lógica de compra y cancelación
-│   ├── models/           ← forma de los datos en MongoDB
-│   └── routes/           ← direcciones de la API (públicas y de administración)
-├── public/               ← la página web (frontend): index.html, app.js, styles.css, logo.svg
-│   └── posters/          ← imágenes de cartelera de cada película
-├── docs/                 ← documentación técnica, diagramas y capturas de pantalla
-└── test/                 ← pruebas automáticas
+cine-atlantico/
+├── docker-compose.yml       ← enciende todo el sistema
+├── Dockerfile               ← imagen de los microservicios
+├── package.json             ← dependencias y comandos (npm start, npm test…)
+├── .env.example             ← plantilla de configuración (Opción B)
+├── servicios/
+│   ├── compartido/
+│   │   └── rabbitmq.js      ← conexión, exchange, colas y reconexión
+│   ├── boletos/             ← microservicio de boletos
+│   │   ├── server.js        ← punto de entrada
+│   │   ├── app.js           ← Express: rutas y manejo de errores
+│   │   ├── servicioCompras.js ← compra atómica y cancelación; publica eventos
+│   │   ├── mensajeria.js    ← publicación en RabbitMQ con patrón outbox
+│   │   ├── asignacion.js    ← algoritmo de mejores asientos
+│   │   ├── seed.js          ← datos de ejemplo
+│   │   ├── models/          ← Pelicula, Sala, Funcion, Compra
+│   │   ├── routes/          ← API pública y de administración
+│   │   └── public/          ← página web, logo y posters/
+│   ├── notificaciones/      ← microservicio de correos
+│   │   ├── index.js         ← consume la cola y envía correos
+│   │   └── plantillas.js    ← correos con códigos QR
+│   └── reportes/            ← microservicio de estadísticas
+│       ├── index.js         ← consume la cola y expone /estadisticas
+│       └── estadisticas.js  ← registro de eventos y agregación
+├── test/                    ← pruebas automáticas
+└── docs/                    ← documentación, diagramas y capturas
 ```
 
-### Cómo se guardan los datos (colecciones de MongoDB)
+### Bases de datos (MongoDB)
 ```
-peliculas  { titulo, genero, clasificacion, duracionMin, sinopsis, activa }
-salas      { nombre, filas, asientosPorFila, pasillos[], asientosDeshabilitados[], filasVip[], recargoVip }
-funcions   { pelicula→, sala→, inicio, fin, precio, formato, idioma, asientosOcupados: ["E5","E6",…] }
-compras    { codigo, funcion→, cliente{nombre,email}, boletos:[{codigo, asiento, precio, vip}],
-             total, metodoPago, asignacion, estado: pagada|cancelada }
+cine            ← servicio de boletos
+  peliculas, salas, funcions, compras, eventospendientes
+cine_reportes   ← servicio de reportes (su propia base de datos)
+  movimientos   ← un documento por evento recibido
 ```
-- Los **boletos van dentro de la compra**: una sola lectura trae la compra completa.
-- Los **asientos vendidos se guardan dentro de la función**: el mapa se dibuja con una sola consulta.
-
-> Para ver estos datos, abre **MongoDB Compass**, conéctate a `mongodb://127.0.0.1:27017` y entra a la base de datos `cine`.
+Cada microservicio tiene **su propia base de datos**: el servicio de reportes nunca lee la base del servicio de boletos; se entera de las ventas solo por los eventos.
 
 ### ¿Cómo se evita vender el mismo asiento dos veces?
-MongoDB garantiza que modificar **un solo documento** es una operación atómica (indivisible). La reserva se hace en un solo paso: *"agrega estos asientos a la función **solo si** ninguno está ya vendido"*:
+La reserva se hace en un solo paso: *"agrega estos asientos a la función **solo si** ninguno está ya vendido"*.
 
 ```js
 Funcion.findOneAndUpdate(
@@ -381,14 +406,12 @@ Funcion.findOneAndUpdate(
   { $push: { asientosOcupados: { $each: asientosPedidos } } }
 )
 ```
-Si dos personas compran el mismo asiento al mismo tiempo, solo una lo consigue; la otra recibe el aviso de que el asiento ya está vendido.
-
-### Algoritmo de "mejores asientos"
-1. Busca N asientos **juntos en la misma fila**. Un pasillo separa los bloques.
-2. Les da una calificación según qué tan cerca están de la fila ideal (~60% hacia el fondo) y del centro de la pantalla, y elige el mejor.
-3. Si no hay N asientos juntos, elige los N mejores asientos sueltos.
+Si dos personas compran el mismo asiento al mismo tiempo, solo una lo consigue; la otra recibe el aviso de que ya está vendido.
 
 ### API REST
+
+**Servicio de boletos (puerto 3000)**
+
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/api/peliculas` | Cartelera con funciones y disponibilidad |
@@ -398,24 +421,30 @@ Si dos personas compran el mismo asiento al mismo tiempo, solo una lo consigue; 
 | GET | `/api/compras/:codigo` | Consultar una compra |
 | GET | `/api/compras?email=…` | Compras de un cliente |
 | POST | `/api/compras/:codigo/cancelar` | `{ email }`: cancela la compra y libera los asientos |
-| GET/POST | `/api/admin/peliculas`, `/api/admin/salas` | Requiere el header `x-admin-key` |
+| GET/POST | `/api/admin/peliculas`, `/api/admin/salas` | Requiere el encabezado `x-admin-key` |
 | POST | `/api/admin/funciones` | `{ peliculaId, salaId, inicio, precio, formato, idioma }` |
 | DELETE | `/api/admin/funciones/:id` | Solo si la función no tiene ventas |
 | GET | `/api/admin/reporte` | Ventas por función |
+| GET | `/api/admin/estadisticas` | Estadísticas del servicio de reportes |
+
+**Servicio de reportes (puerto 3002)**
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/estadisticas` | Compras, cancelaciones, boletos e ingresos por película, y los últimos eventos |
+| GET | `/salud` | Indica si el servicio está encendido |
 
 ### Pruebas automáticas
-```
-npm test
-```
-Este comando intenta usar un MongoDB temporal en memoria; la primera vez lo descarga de internet. Si ya tienes MongoDB encendido, puedes usarlo en su lugar:
 
-- **Mac / Linux:** `MONGODB_URI_TEST=mongodb://127.0.0.1:27017/cine_test npm test`
-- **Windows (cmd):** `set "MONGODB_URI_TEST=mongodb://127.0.0.1:27017/cine_test" && npm test`
+Hay 12 pruebas en la carpeta `test/`. Necesitan MongoDB y RabbitMQ encendidos (Opción B, paso 5) y Node.js:
 
-Las pruebas cubren: compra manual, asientos ocupados, 15 compras simultáneas del mismo asiento (solo una gana), asignación automática sin asientos repetidos, validaciones, cancelación y administración.
+- Windows (PowerShell):
+  ```
+  $env:MONGODB_URI_TEST="mongodb://127.0.0.1:27017/cine_test"; $env:RABBITMQ_URL_TEST="amqp://guest:guest@localhost:5672"; npm test
+  ```
+- Mac / Linux:
+  ```
+  MONGODB_URI_TEST=mongodb://127.0.0.1:27017/cine_test RABBITMQ_URL_TEST=amqp://guest:guest@localhost:5672 npm test
+  ```
 
-### Comando extra para desarrollo
-```
-npm run dev
-```
-Hace lo mismo que `npm start`, pero reinicia el servidor solo cada vez que guardas un cambio en el código.
+Cubren: compra manual, asientos ocupados, **15 compras simultáneas del mismo asiento** (solo 1 gana), asignación automática sin asientos repetidos, validaciones, cancelación, administración, correos con QR, que un evento repetido no se cuente dos veces, el patrón outbox y la publicación de eventos. Sin `RABBITMQ_URL_TEST`, las 2 pruebas que necesitan RabbitMQ se omiten.

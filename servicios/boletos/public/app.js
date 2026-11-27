@@ -263,6 +263,7 @@ async function entrarAdmin() {
     $('#form-funcion').peliculaId.innerHTML = peliculas.map((p) => `<option value="${p._id}">${esc(p.titulo)} (${p.duracionMin} min)</option>`).join('');
     $('#form-funcion').salaId.innerHTML = salas.map((s) => `<option value="${s._id}">${esc(s.nombre)} (${s.filas}×${s.asientosPorFila})</option>`).join('');
     cargarReporte();
+    cargarEstadisticas();
   } catch (e) {
     $('#admin-panel').hidden = true;
     aviso(e.message, true);
@@ -286,6 +287,22 @@ async function cargarReporte() {
     : '<p class="vacio">Aún no hay ventas.</p>';
 }
 $('#btn-reporte').onclick = cargarReporte;
+
+async function cargarEstadisticas() {
+  const cont = $('#estadisticas');
+  try {
+    const { totales, peliculas, ultimosEventos, eventosRegistrados } = await api('/admin/estadisticas');
+    cont.innerHTML = peliculas.length
+      ? `<p><b>${eventosRegistrados}</b> eventos recibidos · <b>${totales.boletosVendidos}</b> boletos vigentes · <b>${dinero(totales.ingresos)}</b> · ${totales.cancelaciones} cancelaciones</p>
+        <table><tr><th>Película</th><th>Compras</th><th>Cancelaciones</th><th>Boletos vigentes</th><th>Ingresos</th></tr>
+        ${peliculas.map((p) => `<tr><td>${esc(p.pelicula)}</td><td>${p.compras}</td><td>${p.cancelaciones}</td><td>${p.boletosVendidos}</td><td>${dinero(p.ingresos)}</td></tr>`).join('')}</table>
+        <p class="ayuda">Últimos eventos: ${ultimosEventos.map((e) => `${esc(e.tipo)} ${esc(e.codigoCompra)}`).join(' · ')}</p>`
+      : '<p class="vacio">El servicio de reportes aún no recibe eventos.</p>';
+  } catch (e) {
+    cont.innerHTML = `<p class="vacio">${esc(e.message)}</p>`;
+  }
+}
+$('#btn-estadisticas').onclick = cargarEstadisticas;
 
 const lista = (s) => s.split(',').map((x) => x.trim()).filter(Boolean);
 function enviarAdmin(form, ruta, transformar) {
