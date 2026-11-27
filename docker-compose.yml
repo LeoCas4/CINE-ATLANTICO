@@ -1,9 +1,83 @@
+# Sistema completo de Cine Atlántico.
+#
+#   docker compose up -d --build              -> enciende todo (infraestructura + 3 microservicios)
+#   docker compose up -d mongo rabbitmq mailpit -> solo la infraestructura (para usar "npm start")
+#
+# Páginas:
+#   http://localhost:3000   Cine Atlántico (página web y API REST)
+#   http://localhost:15672  Panel de RabbitMQ (usuario y contraseña: guest)
+#   http://localhost:8025   Buzón de correos de prueba (Mailpit)
+#   http://localhost:3002/estadisticas  Servicio de reportes
+
+x-servicio-node: &servicio-node
+  build: .
+  image: cine-atlantico
+  restart: unless-stopped
+  environment: &entorno
+    TZ: America/Mexico_City
+    MONGODB_URI: mongodb://mongo:27017/cine
+    REPORTES_MONGODB_URI: mongodb://mongo:27017/cine_reportes
+    RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    SMTP_HOST: mailpit
+    SMTP_PORT: "1025"
+    REPORTES_URL: http://reportes:3002
+    ADMIN_KEY: admin123
+  depends_on:
+    mongo:
+      condition: service_started
+    rabbitmq:
+      condition: service_healthy
+    mailpit:
+      condition: service_started
+
 services:
+  # ---------- Infraestructura ----------
   mongo:
     image: mongo:7
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # protocolo AMQP (lo usan los servicios)
+      - "15672:15672" # panel web
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP (recibe los correos)
+      - "8025:8025" # buzón web
+
+  # ---------- Microservicios ----------
+  boletos:
+    <<: *servicio-node
+    command: ["node", "servicios/boletos/server.js"]
+    ports:
+      - "3000:3000"
+
+  notificaciones:
+    <<: *servicio-node
+    command: ["node", "servicios/notificaciones/index.js"]
+
+  reportes:
+    <<: *servicio-node
+    command: ["node", "servicios/reportes/index.js"]
+    ports:
+      - "3002:3002"
+
 volumes:
   mongo-data:
+  rabbitmq-data:
