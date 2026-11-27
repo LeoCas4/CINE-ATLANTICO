@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const Funcion = require('./models/Funcion');
 const Compra = require('./models/Compra');
 const { mejoresAsientos } = require('./asignacion');
+const mensajeria = require('./mensajeria');
+const { EVENTOS } = require('../compartido/rabbitmq');
 
 const MAX_BOLETOS = 10;
 const MAX_REINTENTOS = 15;
@@ -112,8 +114,9 @@ async function comprar({ funcionId, asientos, cantidad, cliente, metodoPago }) {
     };
   });
 
+  let compra;
   try {
-    const compra = await Compra.create({
+    compra = await Compra.create({
       codigo,
       funcion: funcion._id,
       cliente: datosCliente,
@@ -122,12 +125,38 @@ async function comprar({ funcionId, asientos, cantidad, cliente, metodoPago }) {
       metodoPago: metodoPago === 'efectivo' ? 'efectivo' : 'tarjeta',
       asignacion: automatica ? 'automatica' : 'manual',
     });
-    return obtenerCompra(compra.codigo);
   } catch (err) {
     // Compensación: si no se pudo guardar la compra, se liberan los asientos
     await liberarAsientos(funcion._id, elegidos);
     throw err;
   }
+
+  const completa = await obtenerCompra(compra.codigo);
+  // Se avisa a los demás servicios (correo, reportes) sin hacer esperar al cliente
+  mensajeria.publicar(EVENTOS.COMPRA_CREADA, datosEvento(completa));
+  return completa;
+}
+
+/** Datos de una compra que viajan en los eventos hacia los otros servicios. */
+function datosEvento(compra) {
+  const f = compra.funcion;
+  return {
+    codigo: compra.codigo,
+    estado: compra.estado,
+    cliente: { nombre: compra.cliente.nombre, email: compra.cliente.email },
+    total: compra.total,
+    metodoPago: compra.metodoPago,
+    asignacion: compra.asignacion,
+    boletos: compra.boletos.map((b) => ({ codigo: b.codigo, asiento: b.asiento, precio: b.precio, vip: b.vip })),
+    funcion: {
+      id: String(f._id),
+      inicio: f.inicio,
+      formato: f.formato,
+      idioma: f.idioma,
+      pelicula: f.pelicula.titulo,
+      sala: f.sala.nombre,
+    },
+  };
 }
 
 async function obtenerCompra(codigo) {
@@ -155,11 +184,13 @@ async function cancelar(codigo, email) {
   );
   if (!actualizada) throw new ErrorNegocio('La compra ya estaba cancelada', 409);
   await liberarAsientos(compra.funcion._id, compra.boletos.map((b) => b.asiento));
-  return obtenerCompra(codigo);
+  const cancelada = await obtenerCompra(codigo);
+  mensajeria.publicar(EVENTOS.COMPRA_CANCELADA, datosEvento(cancelada));
+  return cancelada;
 }
 
 function compararAsientos(a, b) {
   return a[0] === b[0] ? Number(a.slice(1)) - Number(b.slice(1)) : a.localeCompare(b);
 }
 
-module.exports = { comprar, obtenerCompra, cancelar, ErrorNegocio, MAX_BOLETOS };
+module.exports = { comprar, obtenerCompra, cancelar, datosEvento, ErrorNegocio, MAX_BOLETOS };
