@@ -17,7 +17,7 @@ for (const router of [publico, admin]) {
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', publico);
 app.use('/api/admin', admin);
 
