@@ -2,10 +2,10 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
-const app = require('../src/app');
-const { seed } = require('../src/seed');
-const Funcion = require('../src/models/Funcion');
-const { mejoresAsientos } = require('../src/asignacion');
+const app = require('../servicios/boletos/app');
+const { seed } = require('../servicios/boletos/seed');
+const Funcion = require('../servicios/boletos/models/Funcion');
+const { mejoresAsientos } = require('../servicios/boletos/asignacion');
 
 let mongo, server, base, funcionId;
 
