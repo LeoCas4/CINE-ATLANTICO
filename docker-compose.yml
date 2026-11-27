@@ -67,6 +67,9 @@ services:
     command: ["node", "servicios/boletos/server.js"]
     ports:
       - "3000:3000"
+    volumes:
+      # Las imágenes que pongas en esta carpeta aparecen sin reconstruir nada
+      - ./servicios/boletos/public/posters:/app/servicios/boletos/public/posters:ro
 
   notificaciones:
     <<: *servicio-node
