@@ -1,18 +1,24 @@
 {
-  "name": "cine-boletos",
-  "version": "1.0.0",
-  "description": "Compra y asignación de boletos para una sala de cine con MongoDB",
+  "name": "cine-atlantico",
+  "version": "2.0.0",
+  "description": "Compra y asignación de boletos de cine con microservicios, MongoDB y RabbitMQ",
   "main": "servicios/boletos/server.js",
   "scripts": {
-    "start": "node servicios/boletos/server.js",
-    "dev": "node --watch servicios/boletos/server.js",
+    "start": "concurrently -n boletos,notificaciones,reportes -c yellow,cyan,magenta \"npm:boletos\" \"npm:notificaciones\" \"npm:reportes\"",
+    "boletos": "node servicios/boletos/server.js",
+    "notificaciones": "node servicios/notificaciones/index.js",
+    "reportes": "node servicios/reportes/index.js",
     "seed": "node servicios/boletos/seed.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js"
   },
   "dependencies": {
+    "amqplib": "^2.4.2",
+    "concurrently": "^10.0.7",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "mongoose": "^8.8.0"
+    "mongoose": "^8.8.0",
+    "nodemailer": "^10.6.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "mongodb-memory-server": "^10.1.2"
